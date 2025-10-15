@@ -6,15 +6,18 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# Загружаем токены из .env (или переменных окружения Render)
+# Загружаем токены из .env (или Render env)
 load_dotenv()
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "").strip()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+
+# Проверяем на случай скрытых символов
+print("TELEGRAM_TOKEN:", repr(TELEGRAM_TOKEN))
 
 # Настраиваем OpenAI
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# Настройка логов
+# Логирование
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.INFO
@@ -23,11 +26,9 @@ logger = logging.getLogger(__name__)
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "👋 Привет! Я ChatGPT-бот. Напиши мне сообщение — и я отвечу!"
-    )
+    await update.message.reply_text("👋 Привет! Я ChatGPT-бот. Напиши мне сообщение — и я отвечу!")
 
-# Обработка обычных сообщений
+# Обработка сообщений
 async def chatgpt_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     user_id = update.message.from_user.id
@@ -40,8 +41,8 @@ async def chatgpt_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Ты дружелюбный Telegram-бот-помощник."},
-                {"role": "user", "content": user_message}
-            ]
+                {"role": "user", "content": user_message},
+            ],
         )
 
         bot_reply = response.choices[0].message.content.strip()
